@@ -4,6 +4,8 @@ project(KTX-Software)
 
 include(CTest)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 find_package(OpenGL)
 find_package(Vulkan)
 
