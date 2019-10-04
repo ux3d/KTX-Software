@@ -23,8 +23,6 @@ if( KTX_FEATURE_UPLOAD_OPENGL OR KTX_FEATURE_UPLOAD_VULKAN )
     set( KTX_FEATURE_UPLOAD ON )
 endif()
 
-set( VULKAN_SDK "" CACHE PATH "Path to Vulkan SDK")
-
 set( UNITY_PACKAGE_PATH "" CACHE PATH "Path locating the Unity package source. When installing, native libraries will get injected there" )
 
 set(KTX_LIB_READ_SRC
@@ -108,7 +106,7 @@ if(KTX_FEATURE_WRITE)
         include
         PRIVATE
         other_include
-        "${VULKAN_SDK}/include"
+        "${Vulkan_INCLUDE_DIRS}"
         )
     list(APPEND KTX_LIB_SRC
         $<TARGET_OBJECTS:objKtxWrite>
@@ -164,7 +162,7 @@ if(NOT KTX_FEATURE_UPLOAD_VULKAN)
     )
 endif()
 
-if(VULKAN_SDK)
+if(Vulkan_FOUND)
     list(APPEND KTX_DEFS
         USE_VULKAN_SDK
     )    
@@ -193,7 +191,7 @@ target_include_directories(
     include
     PRIVATE
     other_include
-    "${VULKAN_SDK}/include"
+    "${Vulkan_INCLUDE_DIRS}"
 )
 
 set(CMAKE_CXX_FLAGS -std=c++11)
