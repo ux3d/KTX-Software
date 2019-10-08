@@ -9,6 +9,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 find_package(OpenGL)
 find_package(Vulkan)
 
+if(${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
+	add_subdirectory(thirdparty/glew/build/cmake)
+	#set_directory_structure(glew)
+endif()
+
 option( KTX_FEATURE_KTX1 "KTX version 1" ON )
 option( KTX_FEATURE_KTX2 "KTX version 2" ON )
 
