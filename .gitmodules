@@ -1,4 +1,0 @@
-[submodule "thirdparty/glew"]
-	path = thirdparty/glew
-	url = https://github.com/nigels-com/glew.git
-	branch = master
