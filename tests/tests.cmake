@@ -20,7 +20,7 @@ add_executable( unittests
 target_include_directories(
     unittests
 PRIVATE
-    $<TARGET_PROPERTY:ktx,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:ktx,INCLUDE_DIRECTORIES>
     ${PROJECT_SOURCE_DIR}/lib
 )
 
@@ -39,7 +39,7 @@ add_executable( texturetests
 target_include_directories(
     texturetests
 PRIVATE
-    $<TARGET_PROPERTY:ktx,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:ktx,INCLUDE_DIRECTORIES>
     ${PROJECT_SOURCE_DIR}/other_include
     ${PROJECT_SOURCE_DIR}/lib
     unittests
@@ -53,4 +53,8 @@ target_link_libraries(
 )
 
 gtest_discover_tests(unittests TEST_PREFIX unittest )
-gtest_discover_tests(texturetests TEST_PREFIX texturetest )
+# For some reason on Travis, 5s was not long enough for Release config.
+gtest_discover_tests(texturetests
+    TEST_PREFIX texturetest
+    DISCOVERY_TIMEOUT 20
+)
