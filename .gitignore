@@ -59,3 +59,5 @@ the_khronos_group_inc.p12
 
 # Place for random developer test files.
 /testground/
+/vscode_build
+/.cache

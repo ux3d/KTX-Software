@@ -9,13 +9,40 @@
 #include <emscripten/bind.h>
 #include <ktx.h>
 #include <iostream>
+#include <string>
 
 using namespace emscripten;
 
 #define ktxTexture2(t) reinterpret_cast<ktxTexture2*>(m_ptr.get())
 
-namespace ktx
-{
+namespace ktx {
+    enum class SwizzleChannel : char { R = 'r', G = 'g', B = 'b', A = 'a' };
+
+    struct BasisParams {
+    bool uastc = false;
+    uint32_t threadCount;
+    uint32_t compressionLevel;
+    uint32_t qualityLevel;
+    uint32_t maxEndpoints;
+    float endpointRDOThreshold;
+    uint32_t maxSelectors;
+    float selectorRDOThreshold;
+    SwizzleChannel inputSwizzle[4];
+    bool normalMap;
+    bool preSwizzle;
+    bool noEndpointRDO;
+    bool noSelectorRDO;
+    ktx_pack_uastc_flag_bits_e uastcFlags;
+    bool uastcRDOQualityScalar;
+    uint32_t uastcRDODictSize;
+    float uastcRDOMaxSmoothBlockErrorScale;
+    float uastcRDOMaxSmoothBlockStdDev;
+    bool uastcRDODontFavorSimplerModes;
+    bool uastcRDONoMultithreading;
+    };
+
+
+    
     class texture
     {
     public:
@@ -131,6 +158,55 @@ namespace ktx
             if (result != KTX_SUCCESS)
             {
                 std::cout << "ERROR: Failed to transcode: " << ktxErrorString(result) << std::endl;
+            }
+            return result;
+        }
+
+        ktx_error_code_e encodeBasis(const BasisParams& basisParams)
+        {
+            if (m_ptr->classId != ktxTexture2_c)
+            {
+                std::cout << "ERROR: encodeBasis is only supported for KTX2" << std::endl;
+                return KTX_INVALID_VALUE;
+            }
+
+            ktxBasisParams params{};
+            params.structSize = sizeof(params);
+            params.uastc = basisParams.uastc;
+            params.threadCount = basisParams.threadCount;
+            params.compressionLevel = basisParams.compressionLevel;
+            params.qualityLevel = basisParams.qualityLevel;
+            params.maxEndpoints = basisParams.maxEndpoints;
+            params.endpointRDOThreshold = basisParams.endpointRDOThreshold;
+            params.maxSelectors = basisParams.maxSelectors;
+            params.selectorRDOThreshold = basisParams.selectorRDOThreshold;
+            params.inputSwizzle[0] = static_cast<char>(basisParams.inputSwizzle[0]);
+            params.inputSwizzle[1] = static_cast<char>(basisParams.inputSwizzle[1]);
+            params.inputSwizzle[2] = static_cast<char>(basisParams.inputSwizzle[2]);
+            params.inputSwizzle[3] = static_cast<char>(basisParams.inputSwizzle[3]);
+            params.normalMap = basisParams.normalMap;
+            params.preSwizzle = basisParams.preSwizzle;
+            params.noEndpointRDO = basisParams.noEndpointRDO;
+            params.noSelectorRDO = basisParams.noSelectorRDO;
+            params.uastcFlags = basisParams.uastcFlags;
+            params.uastcRDOQualityScalar = basisParams.uastcRDOQualityScalar;
+            params.uastcRDODictSize = basisParams.uastcRDODictSize;
+            params.uastcRDOMaxSmoothBlockErrorScale =
+                basisParams.uastcRDOMaxSmoothBlockErrorScale;
+            params.uastcRDOMaxSmoothBlockStdDev =
+                basisParams.uastcRDOMaxSmoothBlockStdDev;
+            params.uastcRDODontFavorSimplerModes =
+                basisParams.uastcRDODontFavorSimplerModes;
+            params.uastcRDONoMultithreading =
+                basisParams.uastcRDONoMultithreading;
+
+            
+            // Set other BasisLZ/ETC1S or UASTC params to change default quality settings.
+            KTX_error_code result = ktxTexture2_CompressBasisEx(ktxTexture2(m_ptr.get()), &params);
+
+            if (result != KTX_SUCCESS)
+            {
+                std::cout << "ERROR: Failed to compress: " << ktxErrorString(result) << std::endl;
             }
             return result;
         }
@@ -409,8 +485,7 @@ callback in JS to upload each image to WebGL.
 
 */
 
-EMSCRIPTEN_BINDINGS(ktx)
-{
+EMSCRIPTEN_BINDINGS(ktx) {
     enum_<ktx_error_code_e>("ErrorCode")
         .value("SUCCESS", KTX_SUCCESS)
         .value("FILE_DATA_ERROR", KTX_FILE_DATA_ERROR)
@@ -485,10 +560,67 @@ EMSCRIPTEN_BINDINGS(ktx)
     value_object<ktxOrientation>("Orientation")
         .field("x", &ktxOrientation::x)
         .field("y", &ktxOrientation::y)
-        .field("z", &ktxOrientation::z)
+        .field("z", &ktxOrientation::z);
+
+    enum_<ktx_pack_uastc_flag_bits_e>("PackUastcFlagBits")
+        .value("KTX_PACK_UASTC_LEVEL_FASTEST", KTX_PACK_UASTC_LEVEL_FASTEST)
+        .value("KTX_PACK_UASTC_LEVEL_FASTER", KTX_PACK_UASTC_LEVEL_FASTER)
+        .value("KTX_PACK_UASTC_LEVEL_DEFAULT", KTX_PACK_UASTC_LEVEL_DEFAULT)
+        .value("KTX_PACK_UASTC_LEVEL_SLOWER", KTX_PACK_UASTC_LEVEL_SLOWER)
+        .value("KTX_PACK_UASTC_LEVEL_VERYSLOW", KTX_PACK_UASTC_LEVEL_VERYSLOW)
+        .value("KTX_PACK_UASTC_MAX_LEVEL", KTX_PACK_UASTC_MAX_LEVEL)
+        .value("KTX_PACK_UASTC_LEVEL_MASK", KTX_PACK_UASTC_LEVEL_MASK)
+        .value("KTX_PACK_UASTC_FAVOR_UASTC_ERROR",
+               KTX_PACK_UASTC_FAVOR_UASTC_ERROR)
+        .value("KTX_PACK_UASTC_FAVOR_BC7_ERROR", KTX_PACK_UASTC_FAVOR_BC7_ERROR)
+        .value("KTX_PACK_UASTC_ETC1_FASTER_HINTS",
+               KTX_PACK_UASTC_ETC1_FASTER_HINTS)
+        .value("KTX_PACK_UASTC_ETC1_FASTEST_HINTS",
+               KTX_PACK_UASTC_ETC1_FASTEST_HINTS)
+        .value("KTX_PACK_UASTC__ETC1_DISABLE_FLIP_AND_INDIVIDUAL", KTX_PACK_UASTC__ETC1_DISABLE_FLIP_AND_INDIVIDUAL);
+
+    enum_<ktx::SwizzleChannel>("SwizzleChannel")
+        .value("R", ktx::SwizzleChannel::R)
+        .value("G", ktx::SwizzleChannel::G)
+        .value("B", ktx::SwizzleChannel::B)
+        .value("A", ktx::SwizzleChannel::A)
+        ;
+    
+    value_object<ktx::BasisParams>("BasisParams")
+        .field("uastc", &ktx::BasisParams::uastc)
+        .field("threadCount", &ktx::BasisParams::threadCount)
+        .field("compressionLevel", &ktx::BasisParams::compressionLevel)
+        .field("qualityLevel", &ktx::BasisParams::qualityLevel)
+        .field("maxEndpoints", &ktx::BasisParams::maxEndpoints)
+        .field("endpointRDOThreshold", &ktx::BasisParams::endpointRDOThreshold)
+        .field("maxSelectors", &ktx::BasisParams::maxSelectors)
+        .field("selectorRDOThreshold", &ktx::BasisParams::selectorRDOThreshold)
+        .field("inputSwizzle", &ktx::BasisParams::inputSwizzle)
+        .field("normalMap", &ktx::BasisParams::normalMap)
+        .field("preSwizzle", &ktx::BasisParams::preSwizzle)
+        .field("noEndpointRDO", &ktx::BasisParams::noEndpointRDO)
+        .field("noSelectorRDO", &ktx::BasisParams::noSelectorRDO)
+        .field("uastcFlags", &ktx::BasisParams::uastcFlags)
+        .field("uastcRDOQualityScalar",
+               &ktx::BasisParams::uastcRDOQualityScalar)
+        .field("uastcRDODictSize", &ktx::BasisParams::uastcRDODictSize)
+        .field("uastcRDOMaxSmoothBlockErrorScale",
+               &ktx::BasisParams::uastcRDOMaxSmoothBlockErrorScale)
+        .field("uastcRDOMaxSmoothBlockStdDev",
+               &ktx::BasisParams::uastcRDOMaxSmoothBlockStdDev)
+        .field("uastcRDODontFavorSimplerModes",
+               &ktx::BasisParams::uastcRDODontFavorSimplerModes)
+        .field("uastcRDONoMultithreading",
+               &ktx::BasisParams::uastcRDONoMultithreading);
+
+    value_array<std::array<ktx::SwizzleChannel, 4>>("SwizzleChannelArrayRGBA")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
         ;
 
-    class_<ktx::texture>("ktxTexture")
+    class_<ktx::texture>("Ktx2Texture")
         .constructor(&ktx::texture::createFromMemory)
         //.class_function("createFromMemory", &ktx::texture::createFromMemory)
         // .property("data", &ktx::texture::getData)
@@ -501,6 +633,7 @@ EMSCRIPTEN_BINDINGS(ktx)
         .property("supercompressScheme", &ktx::texture::supercompressionScheme)
         .property("vkFormat", &ktx::texture::vkFormat)
         .function("transcodeBasis", &ktx::texture::transcodeBasis)
+        .function("encodeBasis", &ktx::texture::encodeBasis)
         .function("glUpload", &ktx::texture::glUpload)
     ;
 }

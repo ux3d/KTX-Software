@@ -874,20 +874,22 @@ if(EMSCRIPTEN)
         "SHELL:-s ASSERTIONS=0"
         "SHELL:-s MALLOC=emmalloc"
         "SHELL:-s MODULARIZE=1"
-        "SHELL:-s FULL_ES3=1"
+        "SHELL:-s EXPORT_ES6=1"
+        
     )
 
     add_executable( ktx_js interface/js_binding/ktx_wrapper.cpp )
-    target_link_libraries( ktx_js ktx_read )
+    target_link_libraries( ktx_js ktx )
     target_include_directories( ktx_js PRIVATE $<TARGET_PROPERTY:ktx_read,INTERFACE_INCLUDE_DIRECTORIES> )
     target_link_options(
         ktx_js
     PUBLIC
         ${KTX_EMC_LINK_FLAGS}
-        "SHELL:-s EXPORT_NAME=LIBKTX"
+        "SHELL:-s EXPORT_NAME=libktx"
         "SHELL:-s EXPORTED_RUNTIME_METHODS=[\'GL\']"
         "SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
-        "SHELL:-s GL_ENABLE_GET_PROC_ADDRESS=1" # For Emscripten 3.1.51+
+        "SHELL:-s GL_ENABLE_GET_PROC_ADDRESS=1" # For Emscripten 3.1.51+"
+        "SHELL:--embind-emit-tsd $<TARGET_FILE_PREFIX:ktx_js>$<TARGET_FILE_BASE_NAME:ktx_js>.d.ts"
     )
     set_target_properties( ktx_js PROPERTIES OUTPUT_NAME "libktx")
 

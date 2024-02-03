@@ -57,7 +57,7 @@ then
     ugids="--user $(id -u):$(id -g)"
   fi
   echo "Starting docker"
-  docker run -dit --name emscripten $ugids -v $(pwd):/src emscripten/emsdk bash
+  docker run -dit --name emscripten $ugids -v $(pwd):/src emscripten/emsdk:3.1.53 bash
 else
   echo "Docker running"
   dockerrunning=1
