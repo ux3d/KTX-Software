@@ -1,0 +1,8 @@
+{
+    "name": "@ux3d/ktx-software",
+    "scripts": {
+        "build:emscripten": "docker run --rm -v $(pwd):/src trzeci/emscripten./build.sh",
+        "build:app": "<the old build command>",
+        "build": "npm run build:emscripten && npm run build:app",
+    }
+}

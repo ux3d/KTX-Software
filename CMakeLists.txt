@@ -886,6 +886,7 @@ if(EMSCRIPTEN)
     PUBLIC
         ${KTX_EMC_LINK_FLAGS}
         "SHELL:-s EXPORT_NAME=libktx"
+        "SHELL:-O0"
         "SHELL:-s EXPORTED_RUNTIME_METHODS=[\'GL\']"
         "SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
         "SHELL:-s GL_ENABLE_GET_PROC_ADDRESS=1" # For Emscripten 3.1.51+"
